@@ -34,11 +34,25 @@ class SettingsDialog(QDialog):
         settings_layout.addWidget(self.coin_selector)
         settings_layout.addWidget(self.add_button)
         
+        # 투명도 조절 슬라이더 추가
+        self.opacity_slider = QSlider(Qt.Horizontal, self)
+        self.opacity_slider.setRange(0, 100)
+        self.opacity_slider.setValue(100)
+        settings_layout.addWidget(self.opacity_slider)
+
+        # 항상 위에 표시 체크박스 추가
+        self.always_on_top_checkbox = QCheckBox('항상 위에 표시', self)
+        settings_layout.addWidget(self.always_on_top_checkbox)
+
         self.setLayout(settings_layout)
 
         # 이벤트 연결
         self.search_input.textChanged.connect(self.filter_coins)
         self.add_button.clicked.connect(self.add_coin)
+
+        # 슬라이더와 체크박스 이벤트 연결
+        self.opacity_slider.valueChanged.connect(self.btc_widget.change_opacity)  # 투명도 변경
+        self.always_on_top_checkbox.stateChanged.connect(self.btc_widget.toggle_always_on_top)  # 항상 위에 표시
 
         # 초기 코인 목록 로드
         self.load_coins()
@@ -91,21 +105,4 @@ def create_layout(widget):
     # 테이블 가로 스크롤 비활성화
     price_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-    # 투명도 조절 슬라이더 추가
-    opacity_slider = QSlider(Qt.Horizontal, widget)
-    opacity_slider.setRange(0, 100)
-    opacity_slider.setValue(100)
-    layout.addWidget(opacity_slider)
-
-    # 항상 위에 표시 체크박스 추가
-    always_on_top_checkbox = QCheckBox('항상 위에 표시', widget)
-    layout.addWidget(always_on_top_checkbox)
-
-    # 설정 창 열기 함수
-    def open_settings():
-        dialog = SettingsDialog(widget, widget)
-        dialog.exec_()
-
-    settings_button.clicked.connect(open_settings)
-
-    return layout, price_table, opacity_slider, always_on_top_checkbox
+    return layout, price_table, settings_button, None

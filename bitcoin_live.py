@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, QEasingCurve
 import win32gui # type: ignore
 import win32con # type: ignore
-from layout_settings import create_layout
+from layout_settings import create_layout, SettingsDialog
 import json
 import webbrowser
 
@@ -37,13 +37,12 @@ class BTCPriceWidget(QWidget):
         self.setWindowFlags(self.windowFlags() | Qt.Tool)  # Tool 플래그 추가로 작업 표시줄 아이콘 제거
 
         # 레이아웃 정
-        layout, self.price_table, self.opacity_slider, self.always_on_top_checkbox = create_layout(self)
+        layout, self.price_table, settings_button, _ = create_layout(self)  # 슬라이더와 체크박스는 이제 설정 창에서 관리됨
         self.setLayout(layout)
 
         # 이벤트 연결
-        self.opacity_slider.valueChanged.connect(self.change_opacity)
-        self.always_on_top_checkbox.stateChanged.connect(self.toggle_always_on_top)
-        
+        settings_button.clicked.connect(self.open_settings_dialog)  # 설정 버튼 클릭 시 설정 창 열기
+
         # 컨텍스트 메뉴 설정
         self.price_table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.price_table.customContextMenuRequested.connect(self.show_context_menu)
@@ -175,6 +174,11 @@ class BTCPriceWidget(QWidget):
             webbrowser.open(url)
         except Exception as e:
             print(f"URL 열기 실패 : {e}")
+
+    def open_settings_dialog(self) -> None:
+        """설정 창 열기"""
+        dialog = SettingsDialog(self, self)  # 현재 위젯을 부모로 설정
+        dialog.exec_()  # 모달로 실행
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
