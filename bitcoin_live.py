@@ -174,7 +174,7 @@ class BTCPriceWidget(QWidget):
         try:
             webbrowser.open(url)
         except Exception as e:
-            print(f"URL 열기 실패: {e}")
+            print(f"URL 열기 실패 : {e}")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
