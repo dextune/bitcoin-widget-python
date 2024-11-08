@@ -23,10 +23,71 @@ class BTCPriceWidget(QWidget):
         self.selected_coins: List[str] = []
         self.coins: List[Tuple[str, str]] = []
         
+        self.load_config()  # 설정 파일 로드
         self._init_ui()
         self._init_timer()
         self._load_coins()
         self.update_price()
+
+    def load_config(self) -> None:
+        """설정 파일에서 정보를 로드"""
+        try:
+            with open('config.json', 'r') as f:
+                config = json.load(f)
+                self.selected_coins = config.get('selected_coins', [])
+                self.setWindowOpacity(config.get('opacity', 100) / 100)
+                
+                # always_on_top 값을 로드하고 설정
+                always_on_top = config.get('always_on_top', 0)
+                print(f"Loaded always_on_top value: {always_on_top}")  # 디버깅용
+                
+                # 창이 완전히 생성된 후에 항상 위 설정을 적용
+                QTimer.singleShot(100, lambda: self.apply_always_on_top(always_on_top))
+                
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Config load error: {e}")  # 디버깅용
+            # 파일이 없거나 잘못된 경우 기본값 사용
+            self.selected_coins = []
+            self.setWindowOpacity(1.0)
+            self.toggle_always_on_top(False)
+
+    def apply_always_on_top(self, value: int) -> None:
+        """항상 위에 표시 설정 적용"""
+        is_top = bool(value)
+        print(f"Applying always on top: {is_top}")  # 디버깅용
+        self.toggle_always_on_top(is_top)
+
+    def toggle_always_on_top(self, state: bool) -> None:
+        """항상 위에 표시 설정"""
+        try:
+            hwnd = self.winId().__int__()
+            
+            if state:
+                print("Setting window to top most")  # 디버깅용
+                win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, 
+                                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+            else:
+                print("Setting window to not top most")  # 디버깅용
+                win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, 
+                                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+        except Exception as e:
+            print(f"Error in toggle_always_on_top: {e}")  # 디버깅용
+
+    def save_config(self) -> None:
+        """설정 정보를 파일에 저장"""
+        try:
+            is_top = self.isAlwaysOnTop()
+            print(f"Saving always_on_top value: {1 if is_top else 0}")  # 디버깅용
+            
+            config = {
+                'selected_coins': self.selected_coins,
+                'always_on_top': 1 if is_top else 0,
+                'opacity': int(self.windowOpacity() * 100)
+            }
+            with open('config.json', 'w') as f:
+                json.dump(config, f)
+        except Exception as e:
+            print(f"Error saving config: {e}")  # 디버깅용
 
     def _init_ui(self) -> None:
         """UI 초기화 및 이벤트 설정"""
@@ -90,16 +151,6 @@ class BTCPriceWidget(QWidget):
             self.price_table.removeRow(row)
             self.selected_coins.pop(row)
 
-    def toggle_always_on_top(self, state: int) -> None:
-        hwnd = self.winId().__int__()
-        
-        if state == Qt.Checked:
-            win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, 
-                                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-        else:
-            win32gui.SetWindowPos(hwnd, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, 
-                                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-        
     def on_fade_out_finished(self, new_flags):  # new_flags 파라미터 추가
         self.setWindowFlags(new_flags)
         self.show()
@@ -179,6 +230,12 @@ class BTCPriceWidget(QWidget):
         """설정 창 열기"""
         dialog = SettingsDialog(self, self)  # 현재 위젯을 부모로 설정
         dialog.exec_()  # 모달로 실행
+        self.save_config()  # 설정이 변경된 후 저장
+
+    def isAlwaysOnTop(self) -> bool:
+        """현재 창이 항상 위에 표시되는지 여부 반환"""
+        hwnd = self.winId().__int__()
+        return win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOPMOST != 0
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

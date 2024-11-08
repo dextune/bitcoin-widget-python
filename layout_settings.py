@@ -57,6 +57,14 @@ class SettingsDialog(QDialog):
         # 초기 코인 목록 로드
         self.load_coins()
 
+        # 설정 값 로드
+        self.load_settings()
+
+    def load_settings(self):
+        """설정 값을 로드하여 UI에 반영"""
+        self.always_on_top_checkbox.setChecked(self.btc_widget.isAlwaysOnTop())
+        self.opacity_slider.setValue(int(self.btc_widget.windowOpacity() * 100))
+
     def load_coins(self):
         if self.btc_widget:
             self.coin_selector.clear()
