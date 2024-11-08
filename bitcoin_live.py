@@ -1,11 +1,15 @@
 from typing import List, Tuple
 import sys
 import requests
+import time
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QMenu, QAction, 
-    QTableWidgetItem
+    QTableWidget, QTableWidgetItem, QPushButton, 
+    QVBoxLayout, QHBoxLayout, QLabel,
+    QHeaderView
 )
-from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, QEasingCurve
+from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtGui import QColor
 import win32gui # type: ignore
 import win32con # type: ignore
 from layout_settings import create_layout, SettingsDialog
@@ -15,7 +19,7 @@ import webbrowser
 # 상수 정의
 UPDATE_INTERVAL = 2500  # ms
 BINANCE_API_BASE = "https://api.binance.com/api/v3"
-WINDOW_GEOMETRY = (300, 300, 250, 300)  # x, y, width, height
+WINDOW_GEOMETRY = (300, 300, 270, 300)  # x, y, width, height
 
 class BTCPriceWidget(QWidget):
     def __init__(self) -> None:
@@ -24,6 +28,9 @@ class BTCPriceWidget(QWidget):
         self.coins: List[Tuple[str, str]] = []
         self.config = {}  # 설정 저장용 딕셔너리
         self.languages = {}  # 언어 데이터 저장
+        self.previous_prices = {}  # 이전 가격 저장용
+        self.drag_pos = None
+        self.window_size = {'width': 270, 'height': 300}  # 기본 창 크기
         
         self.load_language()  # 언어 파일 로드
         self.load_config()  # 설정 파일 로드
@@ -51,14 +58,14 @@ class BTCPriceWidget(QWidget):
 
     def update_texts(self) -> None:
         """UI 텍스트 업데이트"""
-        # 테이블 헤더 텍스트 업데이트
-        self.price_table.setHorizontalHeaderLabels([
-            self.get_text('name'),
-            self.get_text('current_price')
-        ])
+        # 타이틀 업데이트
+        title_label = self.findChild(QLabel, "title_label")
+        if title_label:
+            title_label.setText("Coin Price")
         
-        # 설정 버튼 텍스트 업데이트
-        self.settings_button.setText(self.get_text('settings'))
+        # 테이블 우클릭 메뉴 텍스트 업데이트
+        self.price_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.price_table.customContextMenuRequested.connect(self.show_context_menu)
 
     def load_config(self) -> None:
         """설정 파일에서 정보를 로드"""
@@ -68,6 +75,10 @@ class BTCPriceWidget(QWidget):
                 self.selected_coins = self.config.get('selected_coins', [])
                 self.setWindowOpacity(self.config.get('opacity', 100) / 100)
                 always_on_top = self.config.get('always_on_top', 0)
+                # 창 크기 로드
+                window_size = self.config.get('window_size', {'width': 270, 'height': 300})
+                self.window_size = window_size
+                self.setFixedSize(window_size['width'], window_size['height'])
                 QTimer.singleShot(100, lambda: self.apply_always_on_top(always_on_top))
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Config load error: {e}")
@@ -75,11 +86,12 @@ class BTCPriceWidget(QWidget):
                 'selected_coins': [],
                 'opacity': 100,
                 'always_on_top': 0,
-                'language': 'kr'
+                'language': 'kr',
+                'window_size': {'width': 270, 'height': 300}
             }
             self.selected_coins = []
             self.setWindowOpacity(1.0)
-            self.toggle_always_on_top(False)
+            self.setFixedSize(270, 300)
 
     def apply_always_on_top(self, value: int) -> None:
         """항상 위에 표시 설정 적용"""
@@ -104,39 +116,132 @@ class BTCPriceWidget(QWidget):
             print(f"Error in toggle_always_on_top: {e}")  # 디버깅용
 
     def save_config(self) -> None:
-        """설정 정보를 파일에 저장"""
+        """설정 저장"""
+        self.config.update({
+            'selected_coins': self.selected_coins,
+            'opacity': int(self.windowOpacity() * 100),
+            'always_on_top': int(self.isAlwaysOnTop()),
+            'language': self.config.get('language', 'kr'),
+            'window_size': self.window_size  # 창 크기 저장
+        })
+        
         try:
-            self.config.update({
-                'selected_coins': self.selected_coins,
-                'always_on_top': 1 if self.isAlwaysOnTop() else 0,
-                'opacity': int(self.windowOpacity() * 100)
-            })
             with open('config.json', 'w') as f:
-                json.dump(self.config, f)
+                json.dump(self.config, f, indent=4)
         except Exception as e:
-            print(f"Error saving config: {e}")
+            print(f"Config save error: {e}")
 
     def _init_ui(self) -> None:
         """UI 초기화"""
-        self.setWindowTitle('BTC Price Widget')
+        self.setWindowTitle('Coin Price')
         self.setGeometry(*WINDOW_GEOMETRY)
+        self.setWindowFlags(self.windowFlags() | Qt.Tool | Qt.FramelessWindowHint)
         
-        # 초기 윈도우 플래그 설정
-        self.setWindowFlags(self.windowFlags() | Qt.Tool)  # Tool 플래그 추가로 작업 표시줄 아이콘 제거
+        # 메인 레이아웃
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(1, 1, 1, 1)
+        main_layout.setSpacing(0)
 
-        # 레이아웃 설정
-        layout, self.price_table, self.settings_button, _ = create_layout(self)  # settings_button을 인스턴스 변수로 저장
-        self.setLayout(layout)
+        # 타이틀 바
+        title_bar = QWidget()
+        title_bar.setStyleSheet("background-color: #2B3139;")
+        title_bar_layout = QHBoxLayout()
+        title_bar_layout.setContentsMargins(10, 5, 10, 5)
 
-        # 이벤트 연결
-        self.settings_button.clicked.connect(self.open_settings_dialog)  # 설정 버튼 클릭 시 설정 창 열기
+        # 타이틀 레이블
+        title_label = QLabel("Coin Price")
+        title_label.setStyleSheet("color: #EAECEF; font-weight: bold;")
 
-        # 컨텍스트 메뉴 설정
-        self.price_table.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.price_table.customContextMenuRequested.connect(self.show_context_menu)
+        # 컨트롤 버튼 컨테이너
+        control_buttons = QWidget()
+        control_layout = QHBoxLayout()
+        control_layout.setContentsMargins(0, 0, 0, 0)
+        control_layout.setSpacing(5)
 
+        # 설정 버튼
+        self.settings_button = QPushButton("⚙")
+        self.settings_button.setFixedSize(20, 20)
+        self.settings_button.clicked.connect(self.open_settings_dialog)
+        self.settings_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #848E9C;
+                font-size: 14px;
+                border: none;
+            }
+            QPushButton:hover {
+                color: #EAECEF;
+            }
+        """)
+
+        # 닫기 버튼
+        close_button = QPushButton("×")
+        close_button.setFixedSize(20, 20)
+        close_button.clicked.connect(self.close)
+        close_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #848E9C;
+                font-size: 16px;
+                border: none;
+            }
+            QPushButton:hover {
+                color: #ff4d4d;
+            }
+        """)
+
+        # 버튼들을 컨트롤 레이아웃에 추가
+        control_layout.addWidget(self.settings_button)
+        control_layout.addWidget(close_button)
+        control_buttons.setLayout(control_layout)
+
+        # 타이틀 바에 위젯들 추가
+        title_bar_layout.addWidget(title_label)
+        title_bar_layout.addStretch()
+        title_bar_layout.addWidget(control_buttons)
+        title_bar.setLayout(title_bar_layout)
+        main_layout.addWidget(title_bar)
+
+        # 테이블 위젯
+        self.price_table = QTableWidget(self)
+        self.price_table.setColumnCount(2)
+        self.price_table.horizontalHeader().hide()
+        self.price_table.verticalHeader().hide()
+        
         # 더블클릭 이벤트 연결
         self.price_table.cellDoubleClicked.connect(self.open_trading_page)
+        
+        # 테이블을 읽기 전용으로 설정
+        self.price_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        
+        # 테이블 스타일 설정
+        self.price_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #1E2329;
+                border: none;
+            }
+            QTableWidget::item {
+                color: #EAECEF;
+                border-bottom: 1px solid #2B3139;
+                padding: 5px;
+            }
+            QTableWidget::item:selected {
+                background-color: #363C45;
+            }
+        """)
+        
+        # 테이블 설정
+        self.price_table.setShowGrid(False)
+        self.price_table.setFrameShape(QTableWidget.NoFrame)
+        self.price_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.price_table.setSelectionMode(QTableWidget.SingleSelection)
+        
+        # 컬럼 너비 설정
+        self.price_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.price_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        
+        main_layout.addWidget(self.price_table)
+        self.setLayout(main_layout)
 
     def _init_timer(self) -> None:
         """가격 업데이트 타이머 초기화"""
@@ -212,25 +317,34 @@ class BTCPriceWidget(QWidget):
         """개별 코인 가격 업데이트"""
         try:
             if coin == 'KRW-USD':
-                # 환율 API 호출
                 response = requests.get('https://api.exchangerate-api.com/v4/latest/USD')
                 data = response.json()
-                krw_rate = data['rates']['KRW']
+                current_price = data['rates']['KRW']
                 
                 self.price_table.setItem(index, 0, QTableWidgetItem('KRW-USD'))
-                price_item = QTableWidgetItem(f'{krw_rate:.2f}')
-                price_item.setTextAlignment(Qt.AlignRight)
-                self.price_table.setItem(index, 1, price_item)
+                price_item = QTableWidgetItem(f'{current_price:.2f}')
             else:
-                # 기존 바이낸스 API 호출
                 response = requests.get(f'{BINANCE_API_BASE}/ticker/price?symbol={coin}')
                 response.raise_for_status()
                 data = response.json()
+                current_price = float(data['price'])
                 
                 self.price_table.setItem(index, 0, QTableWidgetItem(coin))
-                price_item = QTableWidgetItem(f'{float(data["price"]):.4f}')
-                price_item.setTextAlignment(Qt.AlignRight)
-                self.price_table.setItem(index, 1, price_item)
+                price_item = QTableWidgetItem(f'{current_price:.4f}')
+            
+            # 가격 변화에 따른 색상 설정
+            previous_price = self.previous_prices.get(coin)
+            if previous_price is not None:
+                if current_price > previous_price:
+                    price_item.setForeground(QColor("#0ECB81"))  # 상승 - 녹색
+                elif current_price < previous_price:
+                    price_item.setForeground(QColor("#F6465D"))  # 하락 - 빨간색
+                else:
+                    price_item.setForeground(QColor("#EAECEF"))  # 변동없음 - 흰색
+            
+            self.previous_prices[coin] = current_price
+            price_item.setTextAlignment(Qt.AlignRight)
+            self.price_table.setItem(index, 1, price_item)
             
         except requests.RequestException as e:
             self.price_table.setItem(index, 0, QTableWidgetItem(coin))
@@ -238,20 +352,20 @@ class BTCPriceWidget(QWidget):
 
     def open_trading_page(self, row: int, column: int) -> None:
         """더블클릭한 코인의 거래소 페이지 열기"""
-        coin = self.price_table.item(row, 0).text()
-        
-        if coin == 'KRW-USD':
-            # 환율 정보 페이지
-            url = 'https://www.tradingview.com/chart/?symbol=FX_IDC%3AUSDKRW'
-        else:
-            # 바이낸스 거래 페이지
-            symbol = coin.lower()
-            url = f'https://www.binance.com/en/trade/{symbol}'
-        
         try:
+            coin = self.price_table.item(row, 0).text()
+            
+            if coin == 'KRW-USD':
+                url = 'https://www.tradingview.com/chart/?symbol=FX_IDC%3AUSDKRW'
+            else:
+                # USDT 페어 처리
+                base_symbol = coin.replace('USDT', '')
+                url = f'https://www.binance.com/en/trade/{base_symbol}_USDT'
+            
+            print(f"Opening URL: {url}")  # 디버깅용
             webbrowser.open(url)
         except Exception as e:
-            print(f"URL 열기 실패 : {e}")
+            print(f"URL 열기 실패: {e}")
 
     def open_settings_dialog(self) -> None:
         """설정 창 열기"""
@@ -263,6 +377,24 @@ class BTCPriceWidget(QWidget):
         """현재 창이 항상 위에 표시되는지 여부 반환"""
         hwnd = self.winId().__int__()
         return win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOPMOST != 0
+
+    def mousePressEvent(self, event):
+        """마우스 클릭 이벤트"""
+        if event.button() == Qt.LeftButton:
+            self.drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        """마우스 드래그 이벤트"""
+        if event.buttons() == Qt.LeftButton and self.drag_pos:
+            self.move(event.globalPos() - self.drag_pos)
+            event.accept()
+
+    def resize_window(self, width: int, height: int) -> None:
+        """창 크기 조절"""
+        self.window_size = {'width': width, 'height': height}
+        self.setFixedSize(width, height)
+        self.save_config()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

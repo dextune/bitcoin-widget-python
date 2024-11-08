@@ -1,1 +1,17 @@
-{"selected_coins": ["KRW-USD", "LTCUSDT", "ENAUSDT"], "always_on_top": 1, "opacity": 80, "language": "en"}
+{
+    "selected_coins": [
+        "KRW-USD",
+        "LTCUSDT",
+        "ENAUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "KAVAUSDT"
+    ],
+    "always_on_top": 1,
+    "opacity": 67,
+    "language": "en",
+    "window_size": {
+        "width": 185,
+        "height": 300
+    }
+}
