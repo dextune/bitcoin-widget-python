@@ -1,0 +1,17 @@
+bitcoin_live.spec
+__pycache__/layout_settings.cpython-313.pyc
+build/bitcoin_live/Analysis-00.toc
+build/bitcoin_live/base_library.zip
+build/bitcoin_live/bitcoin_live.pkg
+build/bitcoin_live/EXE-00.toc
+build/bitcoin_live/PKG-00.toc
+build/bitcoin_live/PYZ-00.pyz
+build/bitcoin_live/PYZ-00.toc
+build/bitcoin_live/warn-bitcoin_live.txt
+build/bitcoin_live/xref-bitcoin_live.html
+build/bitcoin_live/localpycs/pyimod01_archive.pyc
+build/bitcoin_live/localpycs/pyimod02_importers.pyc
+build/bitcoin_live/localpycs/pyimod03_ctypes.pyc
+build/bitcoin_live/localpycs/pyimod04_pywin32.pyc
+build/bitcoin_live/localpycs/struct.pyc
+dist/bitcoin_live.exe
