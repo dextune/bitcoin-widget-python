@@ -208,6 +208,10 @@ class BTCPriceWidget(QWidget):
         self.price_table.horizontalHeader().hide()
         self.price_table.verticalHeader().hide()
         
+        # 우클릭 메뉴 설정
+        self.price_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.price_table.customContextMenuRequested.connect(self.show_context_menu)
+        
         # 더블클릭 이벤트 연결
         self.price_table.cellDoubleClicked.connect(self.open_trading_page)
         
@@ -268,20 +272,25 @@ class BTCPriceWidget(QWidget):
         except requests.RequestException as e:
             print(f"코인 목록 로딩 실패: {e}")
 
-    def show_context_menu(self, pos) -> None:
-        """우클릭 컨텍스트 메뉴 표시"""
-        menu = QMenu(self)
+    def show_context_menu(self, position) -> None:
+        """테이블 우클릭 메뉴 표시"""
+        menu = QMenu()
         delete_action = QAction(self.get_text('delete'), self)
-        delete_action.triggered.connect(lambda: self.delete_row(pos))
+        delete_action.triggered.connect(lambda: self.delete_selected_coin())
         menu.addAction(delete_action)
-        menu.exec_(self.price_table.viewport().mapToGlobal(pos))
+        
+        # 현재 커서 위치에서 메뉴 표시
+        menu.exec_(self.price_table.viewport().mapToGlobal(position))
 
-    def delete_row(self, pos) -> None:
-        """선택된 행 삭제"""
-        row = self.price_table.rowAt(pos.y())
-        if row >= 0:
-            self.price_table.removeRow(row)
-            self.selected_coins.pop(row)
+    def delete_selected_coin(self) -> None:
+        """선택된 코인 삭제"""
+        current_row = self.price_table.currentRow()
+        if current_row >= 0:
+            coin = self.price_table.item(current_row, 0).text()
+            if coin in self.selected_coins:
+                self.selected_coins.remove(coin)
+                self.update_price()
+                self.save_config()
 
     def on_fade_out_finished(self, new_flags):  # new_flags 파라미터 추가
         self.setWindowFlags(new_flags)
