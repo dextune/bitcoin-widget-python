@@ -15,7 +15,7 @@ class SettingsDialog(QDialog):
         self.load_language()  # 언어 파일 먼저 로드
         
         # 설정창 크기 고정
-        self.setFixedSize(300, 400)
+        self.setFixedSize(300, 405)
         
         # 메인 레이아웃
         main_layout = QVBoxLayout()
@@ -32,11 +32,12 @@ class SettingsDialog(QDialog):
             }
         """)
         title_bar_layout = QHBoxLayout()
-        title_bar_layout.setContentsMargins(10, 5, 10, 5)
+        title_bar_layout.setContentsMargins(10, 0, 10, 0)
+        title_bar_layout.setSpacing(0)
         
         # 타이틀 레이블
         title_label = QLabel(self.get_text('settings'))
-        title_label.setStyleSheet("color: #EAECEF; font-weight: bold;")
+        title_label.setStyleSheet("color: #EAECEF; font-weight: bold; font-size: 14px;")
         
         # 닫기 버튼
         close_button = QPushButton("×")
@@ -60,12 +61,16 @@ class SettingsDialog(QDialog):
         title_bar.setLayout(title_bar_layout)
         main_layout.addWidget(title_bar)
         
+        # 메인 레이아웃의 상하 여백을 줄임
+        main_layout.setContentsMargins(1, 1, 1, 1)
+        main_layout.setSpacing(0)
+        
         # 기존 설정 레이아웃을 새로운 컨테이너에 추가
         settings_container = QWidget()
         settings_layout = QVBoxLayout()
         settings_layout.setContentsMargins(10, 10, 10, 10)
         
-        # 언어 선택 콤���박스 추가
+        # 언어 선택 콤박스 추가
         self.language_selector = QComboBox(self)
         self.language_selector.addItem("한국어", "kr")
         self.language_selector.addItem("English", "en")
@@ -101,68 +106,57 @@ class SettingsDialog(QDialog):
 
         # 창 크기 조절 입력 필드 레이아웃 수정
         size_container = QWidget()
-        size_layout = QVBoxLayout()  # HBoxLayout에서 VBoxLayout으로 변경
-        size_layout.setSpacing(5)
+        size_layout = QHBoxLayout()  # HBoxLayout으로 변경하여 한 줄에 표시
         
         # 너비 입력
-        width_container = QWidget()
-        width_layout = QHBoxLayout()
-        width_layout.setContentsMargins(0, 0, 0, 0)
-        width_label = QLabel("Width:")
+        width_label = QLabel("W:")  # Width 레이블을 W로 변경
         self.width_input = QLineEdit()
         self.width_input.setFixedWidth(60)  # 입력 필드 폭 제한
         self.width_input.setText(str(btc_widget.window_size['width']))
-        width_layout.addWidget(width_label)
-        width_layout.addWidget(self.width_input)
-        width_layout.addWidget(QLabel("px"))
-        width_layout.addStretch()
-        width_container.setLayout(width_layout)
+        size_layout.addWidget(width_label)
+        size_layout.addWidget(self.width_input)
+        size_layout.addWidget(QLabel("px"))  # px 텍스트 추가
         
         # 높이 입력
-        height_container = QWidget()
-        height_layout = QHBoxLayout()
-        height_layout.setContentsMargins(0, 0, 0, 0)
-        height_label = QLabel("Height:")
+        height_label = QLabel("H:")  # Height 레이블을 H로 변경
         self.height_input = QLineEdit()
         self.height_input.setFixedWidth(60)  # 입력 필드 폭 제한
         self.height_input.setText(str(btc_widget.window_size['height']))
-        height_layout.addWidget(height_label)
-        height_layout.addWidget(self.height_input)
-        height_layout.addWidget(QLabel("px"))
-        height_layout.addStretch()
-        height_container.setLayout(height_layout)
-        
-        # 적용 버튼
-        apply_size_btn = QPushButton("Apply Size")
-        apply_size_btn.clicked.connect(self.apply_window_size)
+        size_layout.addWidget(height_label)
+        size_layout.addWidget(self.height_input)
+        size_layout.addWidget(QLabel("px"))  # px 텍스트 추가
         
         # 레이아웃에 추가
-        size_layout.addWidget(width_container)
-        size_layout.addWidget(height_container)
-        size_layout.addWidget(apply_size_btn)
         size_container.setLayout(size_layout)
         settings_layout.addWidget(size_container)
 
+        # Apply Size 버튼 생성
+        self.apply_size_button = QPushButton(self.get_text('apply_size'), self)  # 초기화 시 텍스트 설정
+        self.apply_size_button.setObjectName("apply_size_button")  # 객체 이름 설정
+        self.apply_size_button.clicked.connect(self.apply_window_size)
+        settings_layout.addWidget(self.apply_size_button)  # Apply 버튼 추가
+        
+        # 설정 레이아웃을 메인 레이아웃에 추가
         settings_container.setLayout(settings_layout)
         main_layout.addWidget(settings_container)
         
         self.setLayout(main_layout)
-
+        
         # 이벤트 연결
         self.language_selector.currentIndexChanged.connect(self.change_language)
         self.search_input.textChanged.connect(self.filter_coins)
         self.add_button.clicked.connect(self.add_coin)
-
+        
         # 슬라이더와 체크박스 이벤트 연결
         self.opacity_slider.valueChanged.connect(self.btc_widget.change_opacity)  # 투명도 변경
         self.always_on_top_checkbox.stateChanged.connect(self.btc_widget.toggle_always_on_top)  # 항상 위에 표시
-
-        # 초�� 코인 목록 로드
+        
+        # 초 코인 목록 로드
         self.load_coins()
-
+        
         # 설정 값 로드
         self.load_settings()
-
+        
         # 현재 언어 설정을 콤보박스에 반영
         current_lang = self.btc_widget.config.get('language', 'kr')
         index = self.language_selector.findData(current_lang)
@@ -283,7 +277,7 @@ class SettingsDialog(QDialog):
             # 설정 저장
             self.btc_widget.save_config()
 
-    def update_texts(self):
+    def update_texts(self) -> None:
         """UI 텍스트 업데이트"""
         # 타이틀 레이블 업데이트
         title_label = self.findChild(QLabel, "title_label")
@@ -293,6 +287,10 @@ class SettingsDialog(QDialog):
         # 버튼 텍스트 업데이트
         self.add_button.setText(self.get_text('add_coin'))
         self.always_on_top_checkbox.setText(self.get_text('always_on_top'))
+        # Apply Size 버튼 텍스트 업데이트
+        apply_size_btn = self.findChild(QPushButton, "apply_size_button")  # Apply Size 버튼을 찾음
+        if apply_size_btn:
+            apply_size_btn.setText(self.get_text('apply_size'))  # 언어에 맞게 텍스트 업데이트
         
         # 검색창 플레이스홀더 업데이트
         self.search_input.setPlaceholderText(self.get_text('search_coin'))

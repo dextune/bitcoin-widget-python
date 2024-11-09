@@ -3,10 +3,10 @@
         "LTCUSDT"
     ],
     "always_on_top": 1,
-    "opacity": 61,
+    "opacity": 60,
     "language": "kr",
     "window_size": {
-        "width": 185,
+        "width": 200,
         "height": 300
     }
 }

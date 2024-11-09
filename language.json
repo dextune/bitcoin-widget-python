@@ -9,7 +9,8 @@
         "name": "이름",
         "current_price": "현재가",
         "language": "언어",
-        "url_open_error": "URL 열기 실패"
+        "url_open_error": "URL 열기 실패",
+        "apply_size": "크기 적용"
     },
     "en": {
         "settings": "Settings",
@@ -21,6 +22,7 @@
         "name": "Name",
         "current_price": "Price",
         "language": "Language",
-        "url_open_error": "Failed to open URL"
+        "url_open_error": "Failed to open URL",
+        "apply_size": "Apply Size"
     }
 } 
