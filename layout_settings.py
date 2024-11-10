@@ -6,6 +6,29 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 import json
 
+# 상단에 스타일 상수 추가
+WINDOW_STYLE = """
+    QWidget {
+        background-color: #1E2329;
+        color: #EAECEF;
+    }
+"""
+
+TABLE_STYLE = """
+    QTableWidget {
+        background-color: #1E2329;
+        border: none;
+    }
+    QTableWidget::item {
+        color: #EAECEF;
+        border-bottom: 1px solid #2B3139;
+        padding: 5px;
+    }
+    QTableWidget::item:selected {
+        background-color: #363C45;
+    }
+"""
+
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, btc_widget=None):
         super().__init__(parent)
@@ -380,3 +403,57 @@ def create_layout(widget):
     layout.addWidget(price_table)
 
     return layout, price_table, settings_button, None
+
+def setup_table(table: QTableWidget) -> None:
+    """테이블 위젯 설정"""
+    # 테이블 기본 설정
+    table.setColumnCount(2)
+    table.horizontalHeader().hide()
+    table.verticalHeader().hide()
+    
+    # 테이블 스타일 설정
+    table.setStyleSheet(TABLE_STYLE)
+    
+    # 테이블 속성 설정
+    table.setShowGrid(False)
+    table.setFrameShape(QTableWidget.NoFrame)
+    table.setSelectionBehavior(QTableWidget.SelectRows)
+    table.setSelectionMode(QTableWidget.SingleSelection)
+    table.setEditTriggers(QTableWidget.NoEditTriggers)
+    
+    # 컬럼 너비 설정
+    table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+    table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+
+def create_title_bar(widget, title_text="Coin Price") -> tuple[QWidget, QPushButton]:
+    """타이틀 바 생성"""
+    title_bar = QWidget()
+    title_bar.setStyleSheet("background-color: #2B3139;")
+    title_bar_layout = QHBoxLayout()
+    title_bar_layout.setContentsMargins(10, 5, 10, 5)
+    
+    # 타이틀 레이블
+    title_label = QLabel(title_text)
+    title_label.setStyleSheet("color: #EAECEF; font-weight: bold;")
+    
+    # 설정 버튼
+    settings_button = QPushButton("⚙", widget)
+    settings_button.setFixedSize(20, 20)
+    settings_button.setStyleSheet("""
+        QPushButton {
+            background-color: transparent;
+            color: #848E9C;
+            font-size: 14px;
+            border: none;
+        }
+        QPushButton:hover {
+            color: #EAECEF;
+        }
+    """)
+    
+    title_bar_layout.addWidget(title_label)
+    title_bar_layout.addStretch()
+    title_bar_layout.addWidget(settings_button)
+    title_bar.setLayout(title_bar_layout)
+    
+    return title_bar, settings_button

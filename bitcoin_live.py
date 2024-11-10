@@ -12,7 +12,7 @@ from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QColor
 import win32gui # type: ignore
 import win32con # type: ignore
-from layout_settings import create_layout, SettingsDialog
+from layout_settings import create_layout, SettingsDialog, WINDOW_STYLE, TABLE_STYLE, setup_table, create_title_bar
 import json
 import webbrowser
 
@@ -141,111 +141,28 @@ class BTCPriceWidget(QWidget):
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(1, 1, 1, 1)
         main_layout.setSpacing(0)
-
-        # 타이틀 바
-        title_bar = QWidget()
-        title_bar.setStyleSheet("background-color: #2B3139;")
-        title_bar_layout = QHBoxLayout()
-        title_bar_layout.setContentsMargins(10, 5, 10, 5)
-
-        # 타이틀 레이블
-        title_label = QLabel("Coin Price")
-        title_label.setStyleSheet("color: #EAECEF; font-weight: bold;")
-
-        # 컨트롤 버튼 컨테이너
-        control_buttons = QWidget()
-        control_layout = QHBoxLayout()
-        control_layout.setContentsMargins(0, 0, 0, 0)
-        control_layout.setSpacing(5)
-
-        # 설정 버튼
-        self.settings_button = QPushButton("⚙")
-        self.settings_button.setFixedSize(20, 20)
-        self.settings_button.clicked.connect(self.open_settings_dialog)
-        self.settings_button.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                color: #848E9C;
-                font-size: 14px;
-                border: none;
-            }
-            QPushButton:hover {
-                color: #EAECEF;
-            }
-        """)
-
-        # 닫기 버튼
-        close_button = QPushButton("×")
-        close_button.setFixedSize(20, 20)
-        close_button.clicked.connect(self.close)
-        close_button.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                color: #848E9C;
-                font-size: 16px;
-                border: none;
-            }
-            QPushButton:hover {
-                color: #ff4d4d;
-            }
-        """)
-
-        # 버튼들을 컨트롤 레이아웃에 추가
-        control_layout.addWidget(self.settings_button)
-        control_layout.addWidget(close_button)
-        control_buttons.setLayout(control_layout)
-
-        # 타이틀 바에 위젯들 추가
-        title_bar_layout.addWidget(title_label)
-        title_bar_layout.addStretch()
-        title_bar_layout.addWidget(control_buttons)
-        title_bar.setLayout(title_bar_layout)
-        main_layout.addWidget(title_bar)
-
-        # 테이블 위젯
-        self.price_table = QTableWidget(self)
-        self.price_table.setColumnCount(2)
-        self.price_table.horizontalHeader().hide()
-        self.price_table.verticalHeader().hide()
         
-        # 우클릭 메뉴 설정
+        # 타이틀 바 추가
+        title_bar, self.settings_button = create_title_bar(self)
+        main_layout.addWidget(title_bar)
+        
+        # 설정 버튼 클릭 이벤트 연결
+        self.settings_button.clicked.connect(self.open_settings_dialog)
+        
+        # 테이블 위젯 설정
+        self.price_table = QTableWidget(self)
+        setup_table(self.price_table)
+        
+        # 우클릭 메뉴와 더블클릭 이벤트 설정
         self.price_table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.price_table.customContextMenuRequested.connect(self.show_context_menu)
-        
-        # 더블클릭 이벤트 연결
         self.price_table.cellDoubleClicked.connect(self.open_trading_page)
-        
-        # 테이블을 읽기 전용으로 설정
-        self.price_table.setEditTriggers(QTableWidget.NoEditTriggers)
-        
-        # 테이블 스타일 설정
-        self.price_table.setStyleSheet("""
-            QTableWidget {
-                background-color: #1E2329;
-                border: none;
-            }
-            QTableWidget::item {
-                color: #EAECEF;
-                border-bottom: 1px solid #2B3139;
-                padding: 5px;
-            }
-            QTableWidget::item:selected {
-                background-color: #363C45;
-            }
-        """)
-        
-        # 테이블 설정
-        self.price_table.setShowGrid(False)
-        self.price_table.setFrameShape(QTableWidget.NoFrame)
-        self.price_table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.price_table.setSelectionMode(QTableWidget.SingleSelection)
-        
-        # 컬럼 너비 설정
-        self.price_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.price_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         
         main_layout.addWidget(self.price_table)
         self.setLayout(main_layout)
+        
+        # 전체 창 스타일 설정
+        self.setStyleSheet(WINDOW_STYLE)
 
     def _init_timer(self) -> None:
         """가격 업데이트 타이머 초기화"""
