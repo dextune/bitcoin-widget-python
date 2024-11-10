@@ -142,12 +142,14 @@ class BTCPriceWidget(QWidget):
         main_layout.setContentsMargins(1, 1, 1, 1)
         main_layout.setSpacing(0)
         
-        # 타이틀 바 추가
-        title_bar, self.settings_button = create_title_bar(self)
+        # 타이틀 바 추가 (닫기 버튼 포함)
+        title_bar, self.settings_button, close_button = create_title_bar(self)
         main_layout.addWidget(title_bar)
         
         # 설정 버튼 클릭 이벤트 연결
         self.settings_button.clicked.connect(self.open_settings_dialog)
+        # 닫기 버튼 클릭 이벤트 연결
+        close_button.clicked.connect(self.close)
         
         # 테이블 위젯 설정
         self.price_table = QTableWidget(self)
@@ -258,23 +260,16 @@ class BTCPriceWidget(QWidget):
                 self.price_table.setItem(index, 0, QTableWidgetItem(coin))
                 price_item = QTableWidgetItem(f'{current_price:.4f}')
             
-            # 가격 변화에 따른 색상 설정
-            previous_price = self.previous_prices.get(coin)
-            if previous_price is not None:
-                if current_price > previous_price:
-                    price_item.setForeground(QColor("#0ECB81"))  # 상승 - 녹색
-                elif current_price < previous_price:
-                    price_item.setForeground(QColor("#F6465D"))  # 하락 - 빨간색
-                else:
-                    price_item.setForeground(QColor("#EAECEF"))  # 변동없음 - 흰색
-            
-            self.previous_prices[coin] = current_price
+            # 기본 색상 설정 (흰색)
+            price_item.setForeground(QColor("#EAECEF"))
             price_item.setTextAlignment(Qt.AlignRight)
             self.price_table.setItem(index, 1, price_item)
             
         except requests.RequestException as e:
             self.price_table.setItem(index, 0, QTableWidgetItem(coin))
-            self.price_table.setItem(index, 1, QTableWidgetItem(f'Error: {str(e)}'))
+            error_item = QTableWidgetItem("Error")
+            error_item.setForeground(QColor("#F6465D"))  # 에러는 빨간색으로 표시
+            self.price_table.setItem(index, 1, error_item)
 
     def open_trading_page(self, row: int, column: int) -> None:
         """더블클릭한 코인의 거래소 페이지 열기"""
@@ -313,7 +308,32 @@ class BTCPriceWidget(QWidget):
     def mouseMoveEvent(self, event):
         """마우스 드래그 이벤트"""
         if event.buttons() == Qt.LeftButton and self.drag_pos:
-            self.move(event.globalPos() - self.drag_pos)
+            # 현재 창의 새 위치 계산
+            new_pos = event.globalPos() - self.drag_pos
+            screen = QApplication.primaryScreen().geometry()
+            
+            # 자석 효과를 위한 거 임계값 (픽셀)
+            snap_distance = 20
+            
+            # 창의 크기
+            window_width = self.width()
+            window_height = self.height()
+            
+            # 화면 가장자리 검사 및 스냅
+            # 왼쪽 가장자리
+            if abs(new_pos.x()) < snap_distance:
+                new_pos.setX(0)
+            # 오른쪽 가장자리
+            elif abs(screen.width() - (new_pos.x() + window_width)) < snap_distance:
+                new_pos.setX(screen.width() - window_width)
+            # 위쪽 가장자리
+            if abs(new_pos.y()) < snap_distance:
+                new_pos.setY(0)
+            # 아래쪽 가장자리
+            elif abs(screen.height() - (new_pos.y() + window_height)) < snap_distance:
+                new_pos.setY(screen.height() - window_height)
+            
+            self.move(new_pos)
             event.accept()
 
     def resize_window(self, width: int, height: int) -> None:

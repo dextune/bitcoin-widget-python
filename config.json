@@ -1,12 +1,14 @@
 {
     "selected_coins": [
-        "LTCUSDT"
+        "ENAUSDT",
+        "BTCUSDT",
+        "KRW-USD"
     ],
     "always_on_top": 1,
-    "opacity": 60,
+    "opacity": 32,
     "language": "kr",
     "window_size": {
         "width": 200,
-        "height": 300
+        "height": 200
     }
 }

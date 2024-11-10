@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 import json
+from typing import Tuple
 
 # 상단에 스타일 상수 추가
 WINDOW_STYLE = """
@@ -360,7 +361,7 @@ def create_layout(widget):
     top_bar_layout = QHBoxLayout()
     top_bar_layout.setContentsMargins(5, 5, 5, 5)
     
-    # 설정 버튼 추가
+    # 정 버튼 추가
     settings_button = QPushButton("⚙", widget)
     settings_button.setFixedSize(20, 20)
     settings_button.setStyleSheet("""
@@ -425,35 +426,49 @@ def setup_table(table: QTableWidget) -> None:
     table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
     table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
-def create_title_bar(widget, title_text="Coin Price") -> tuple[QWidget, QPushButton]:
+def create_title_bar(parent: QWidget) -> Tuple[QWidget, QPushButton, QPushButton]:
     """타이틀 바 생성"""
-    title_bar = QWidget()
-    title_bar.setStyleSheet("background-color: #2B3139;")
-    title_bar_layout = QHBoxLayout()
-    title_bar_layout.setContentsMargins(10, 5, 10, 5)
-    
-    # 타이틀 레이블
-    title_label = QLabel(title_text)
-    title_label.setStyleSheet("color: #EAECEF; font-weight: bold;")
-    
-    # 설정 버튼
-    settings_button = QPushButton("⚙", widget)
-    settings_button.setFixedSize(20, 20)
-    settings_button.setStyleSheet("""
+    title_bar = QWidget(parent)
+    title_bar.setFixedHeight(30)
+    title_bar.setStyleSheet("""
+        QWidget {
+            background-color: #1E2329;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
         QPushButton {
             background-color: transparent;
-            color: #848E9C;
-            font-size: 14px;
             border: none;
+            padding: 5px;
+            color: #848E9C;
         }
         QPushButton:hover {
-            color: #EAECEF;
+            background-color: #2B3139;
         }
     """)
     
-    title_bar_layout.addWidget(title_label)
-    title_bar_layout.addStretch()
-    title_bar_layout.addWidget(settings_button)
-    title_bar.setLayout(title_bar_layout)
+    layout = QHBoxLayout(title_bar)
+    layout.setContentsMargins(10, 0, 10, 0)
+    layout.setSpacing(5)
     
-    return title_bar, settings_button
+    # 타이틀 레이블
+    title_label = QLabel("Coin Price", title_bar)
+    title_label.setObjectName("title_label")
+    title_label.setStyleSheet("color: #EAECEF; font-weight: bold;")
+    
+    # 설정 버튼
+    settings_button = QPushButton("⚙", title_bar)
+    settings_button.setFixedSize(30, 30)
+    settings_button.setStyleSheet("font-size: 16px;")
+    
+    # 닫기 버튼
+    close_button = QPushButton("×", title_bar)
+    close_button.setFixedSize(30, 30)
+    close_button.setStyleSheet("font-size: 20px;")
+    
+    layout.addWidget(title_label)
+    layout.addStretch()
+    layout.addWidget(settings_button)
+    layout.addWidget(close_button)
+    
+    return title_bar, settings_button, close_button
