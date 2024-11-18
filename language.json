@@ -1,17 +1,4 @@
 {
-    "kr": {
-        "settings": "설정",
-        "search_coin": "코인 검색",
-        "select_coin": "코인 선택",
-        "add_coin": "코인 추가",
-        "always_on_top": "항상 위에 표시",
-        "delete": "삭제",
-        "name": "이름",
-        "current_price": "현재가",
-        "language": "언어",
-        "url_open_error": "URL 열기 실패",
-        "apply_size": "크기 적용"
-    },
     "en": {
         "settings": "Settings",
         "search_coin": "Search Coin",

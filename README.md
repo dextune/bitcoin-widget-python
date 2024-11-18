@@ -1,5 +1,8 @@
 # Real-time Cryptocurrency Price Monitoring Widget
 
+![alt text](img/main.png)
+![alt text](img/config.png)
+
 ## Introduction
 This program is a lightweight widget for monitoring cryptocurrency prices in real-time on your desktop. It utilizes Binance exchange's real-time price information and provides a user-friendly interface.
 

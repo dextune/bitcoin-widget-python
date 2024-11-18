@@ -6,8 +6,8 @@
         "QTUMUSDT"
     ],
     "always_on_top": 1,
-    "opacity": 62,
-    "language": "kr",
+    "opacity": 100,
+    "language": "en",
     "window_size": {
         "width": 200,
         "height": 200
