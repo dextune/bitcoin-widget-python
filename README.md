@@ -1,3 +1,31 @@
+# Real-time Cryptocurrency Price Monitoring Widget
+
+## Introduction
+This program is a lightweight widget for monitoring cryptocurrency prices in real-time on your desktop. It utilizes Binance exchange's real-time price information and provides a user-friendly interface.
+
+## Key Features
+
+### Basic Features
+- Real-time cryptocurrency price monitoring
+- KRW-USD exchange rate information
+- Binance exchange API integration
+- Coin search and add/remove functionality
+
+### User Interface
+- Adjustable transparency (0-100%)
+- Always on top option
+- Flexible window size adjustment
+- Screen edge magnetic effect
+- Free position movement via drag
+
+### Convenience Features
+- Auto-connect to exchange page with double-click
+- Quick coin removal with right-click
+- Multi-language support (Korean/English)
+- Automatic settings save
+
+
+
 # 실시간 암호화폐 가격 모니터링 위젯
 
 ## 소개
