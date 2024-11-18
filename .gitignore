@@ -14,5 +14,6 @@ build/bitcoin_live/localpycs/pyimod02_importers.pyc
 build/bitcoin_live/localpycs/pyimod03_ctypes.pyc
 build/bitcoin_live/localpycs/pyimod04_pywin32.pyc
 build/bitcoin_live/localpycs/struct.pyc
-dist/bitcoin_live.exe
+dist
 __pycache__/layout_settings.cpython-310.pyc
+.gitignore

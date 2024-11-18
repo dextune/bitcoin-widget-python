@@ -2,10 +2,11 @@
     "selected_coins": [
         "ENAUSDT",
         "BTCUSDT",
-        "KRW-USD"
+        "KRW-USD",
+        "QTUMUSDT"
     ],
     "always_on_top": 1,
-    "opacity": 32,
+    "opacity": 62,
     "language": "kr",
     "window_size": {
         "width": 200,
