@@ -1,12 +1,13 @@
 {
     "selected_coins": [
-        "ENAUSDT",
         "BTCUSDT",
-        "KRW-USD",
-        "QTUMUSDT"
+        "ETHUSDT",
+        "ENAUSDT",
+        "POLUSDT",
+        "TRUMPUSDT"
     ],
     "always_on_top": 1,
-    "opacity": 100,
+    "opacity": 57,
     "language": "en",
     "window_size": {
         "width": 200,
