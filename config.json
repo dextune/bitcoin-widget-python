@@ -7,10 +7,24 @@
         "TRUMPUSDT"
     ],
     "always_on_top": 1,
-    "opacity": 57,
+    "opacity": 55,
     "language": "en",
     "window_size": {
-        "width": 200,
+        "width": 280,
         "height": 200
+    },
+    "coin_data": {
+        "ENAUSDT": {
+            "entry_price": 0.456,
+            "current_holding": 200000
+        },
+        "POLUSDT": {
+            "entry_price": 0.2483,
+            "current_holding": 420860
+        },
+        "TRUMPUSDT": {
+            "entry_price": 12.804,
+            "current_holding": 234.24
+        }
     }
 }

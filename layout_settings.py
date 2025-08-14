@@ -400,7 +400,7 @@ def create_layout(widget):
 def setup_table(table: QTableWidget) -> None:
     """Configure table widget settings"""
     # Basic table settings
-    table.setColumnCount(2)
+    table.setColumnCount(3) # Changed to 3 columns
     table.horizontalHeader().hide()
     table.verticalHeader().hide()
     
@@ -416,7 +416,8 @@ def setup_table(table: QTableWidget) -> None:
     
     # Column width settings
     table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-    table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+    table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents) # Adjust as needed
+    table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch) # New column for profit
 
 def create_title_bar(parent: QWidget) -> Tuple[QWidget, QPushButton, QPushButton]:
     """Create title bar with controls"""

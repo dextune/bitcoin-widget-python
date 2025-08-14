@@ -10,6 +10,8 @@
         "current_price": "Price",
         "language": "Language",
         "url_open_error": "Failed to open URL",
-        "apply_size": "Apply Size"
+        "apply_size": "Apply Size",
+        "coin_price": "Coin Price",
+        "profit": "Profit"
     }
 } 

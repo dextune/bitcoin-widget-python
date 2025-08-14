@@ -61,7 +61,7 @@ class BTCPriceWidget(QWidget):
         # Update title
         title_label = self.findChild(QLabel, "title_label")
         if title_label:
-            title_label.setText("Coin Price")
+            title_label.setText(self.get_text('coin_price'))
         
         # Update context menu text for right-click
         self.price_table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -80,6 +80,7 @@ class BTCPriceWidget(QWidget):
                 self.window_size = window_size
                 self.setFixedSize(window_size['width'], window_size['height'])
                 QTimer.singleShot(100, lambda: self.apply_always_on_top(always_on_top))
+                self.coin_data = self.config.get('coin_data', {}) # Load coin data
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Config load error: {e}")
             self.config = {
@@ -87,11 +88,13 @@ class BTCPriceWidget(QWidget):
                 'opacity': 100,
                 'always_on_top': 0,
                 'language': 'kr',
-                'window_size': {'width': 270, 'height': 300}
+                'window_size': {'width': 270, 'height': 300},
+                'coin_data': {} # Initialize coin_data
             }
             self.selected_coins = []
             self.setWindowOpacity(1.0)
             self.setFixedSize(270, 300)
+            self.coin_data = {}
 
     def apply_always_on_top(self, value: int) -> None:
         """Apply always on top setting"""
@@ -122,7 +125,8 @@ class BTCPriceWidget(QWidget):
             'opacity': int(self.windowOpacity() * 100),
             'always_on_top': int(self.isAlwaysOnTop()),
             'language': self.config.get('language', 'kr'),
-            'window_size': self.window_size  # Save window size
+            'window_size': self.window_size,  # Save window size
+            'coin_data': self.coin_data  # Save coin data
         })
         
         try:
@@ -264,12 +268,36 @@ class BTCPriceWidget(QWidget):
             price_item.setForeground(QColor("#EAECEF"))
             price_item.setTextAlignment(Qt.AlignRight)
             self.price_table.setItem(index, 1, price_item)
+
+            # Calculate and display profit
+            profit_item = QTableWidgetItem("")
+            if coin in self.coin_data:
+                entry_price = self.coin_data[coin].get('entry_price')
+                current_holding = self.coin_data[coin].get('current_holding')
+                if entry_price is not None and current_holding is not None:
+                    profit = (current_price - entry_price) * current_holding
+                    profit_sign = "+" if profit >= 0 else "-"
+                    profit_item.setText(f'{profit_sign}  {abs(profit):,.2f}')
+                    if profit >= 0:
+                        profit_item.setForeground(QColor("#00FF7F")) # Green for profit
+                    else:
+                        profit_item.setForeground(QColor("#F6465D")) # Red for loss
+                else:
+                    profit_item.setText("") # Display empty string instead of N/A
+                    # profit_item.setForeground(QColor("#848E9C")) # Remove foreground color for empty
+            else:
+                profit_item.setText("") # Display empty string instead of N/A
+                # profit_item.setForeground(QColor("#848E9C")) # Remove foreground color for empty
+            
+            profit_item.setTextAlignment(Qt.AlignRight)
+            self.price_table.setItem(index, 2, profit_item) # Set profit to the third column
             
         except requests.RequestException as e:
             self.price_table.setItem(index, 0, QTableWidgetItem(coin))
             error_item = QTableWidgetItem("Error")
             error_item.setForeground(QColor("#F6465D"))  # Error is displayed in red
             self.price_table.setItem(index, 1, error_item)
+            self.price_table.setItem(index, 2, QTableWidgetItem("Error")) # Also show error in profit column
 
     def open_trading_page(self, row: int, column: int) -> None:
         """Open exchange page for double-clicked coin"""
